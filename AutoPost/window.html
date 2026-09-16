@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FB Auto Poster v1.0.2</title>
+  <link rel="stylesheet" href="window.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 1. Soạn Thảo Nội Dung Bài Đăng -->
+    <section class="card card-post-content">
+      <div class="card-header post-card-header">
+        <div class="header-left-group">
+          <h2 class="card-title">📝 Bài Viết</h2>
+          <span class="header-customer-name" id="headerCustomerName" title="Tên khách hàng sở hữu bản quyền">Chưa kích hoạt</span>
+          <!-- Đã bỏ giới hạn số lượng extension trên máy -->
+          <span class="badge badge-ext-count" id="headerExtCount" style="display: none;" title="Số extension đang chạy trên máy này"></span>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline btn-key-config" id="btnOpenLicenseModal" title="Nhấn vào để cấu hình hoặc xem thông tin Key">
+          ⚙️ Key
+        </button>
+      </div>
+
+      <div class="form-group">
+        <textarea id="postContentInput" rows="6" spellcheck="false" placeholder="Nhập hoặc dán nội dung bài viết tại đây..."></textarea>
+        <div class="textarea-footer">
+          <span class="text-counter" id="textCounter">0 từ | 0 ký tự</span>
+        </div>
+      </div>
+
+      <!-- Khung 2 Cột: Nửa trái Ảnh vuông (nút X đỏ góc phải trên), Nửa phải Cấu hình (Cá nhân, Nhóm, Nghỉ) -->
+      <div class="post-media-config-row">
+        <!-- Nửa Trái: Ảnh vuông -->
+        <div class="media-col">
+          <input type="file" id="imageFileInput" accept="image/*" style="display: none;" />
+          <div class="image-dropzone compact-square" id="imageDropzone" title="Bấm để chọn ảnh hoặc dán ảnh Ctrl+V">
+            <div class="dropzone-empty" id="dropzoneEmpty">
+              <span class="dropzone-icon">📷</span>
+              <span class="dropzone-text">Ảnh đính kèm</span>
+              <span class="dropzone-hint">(Ctrl+V)</span>
+            </div>
+
+            <div class="dropzone-preview square-preview" id="dropzonePreview" style="display: none;">
+              <img id="imagePreviewImg" src="" alt="Ảnh xem trước" />
+              <!-- Nút X đỏ ở góc phải trên trong ảnh -->
+              <button type="button" class="btn-remove-image-corner" id="btnRemoveImage" title="Gỡ ảnh này">✕</button>
+              <span class="preview-info" id="imagePreviewInfo" style="display: none;"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nửa Phải: Hợp nhất toàn bộ tùy chọn cấu hình vào 1 khung duy nhất -->
+        <div class="config-col">
+          <div class="unified-config-box" id="unifiedConfigBox">
+            <div class="post-targets-checkboxes">
+              <label class="checkbox-label" title="Đăng lên Trang cá nhân trước">
+                <input type="checkbox" id="chkPostPersonal" checked />
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-title">👤 Cá nhân</span>
+              </label>
+
+              <label class="checkbox-label" title="Đăng tuần tự lên các nhóm đã chọn">
+                <input type="checkbox" id="chkPostGroups" checked />
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-title">👥 Nhóm</span>
+              </label>
+            </div>
+
+            <div class="delay-row-compact" title="Thời gian nghỉ giữa mỗi nhóm">
+              <span class="delay-label">⏳ Nghỉ:</span>
+              <div class="delay-input-wrap">
+                <input type="number" id="delaySecondsInput" min="0" step="1" value="45" />
+                <span class="delay-unit">giây</span>
+              </div>
+            </div>
+
+            <div class="config-divider"></div>
+
+            <!-- Tự rời nhóm khi vượt quá X bài đang chờ: trên cùng 1 dòng và tự động cắt/xuống dòng -->
+            <div class="auto-leave-inline-flow" title="Tự động rời khỏi nhóm nếu phát hiện nhóm có từ X bài viết đang chờ phê duyệt trở lên">
+              <label class="checkbox-label auto-leave-label" for="chkAutoLeavePending">
+                <input type="checkbox" id="chkAutoLeavePending" />
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-title">🚪 Tự rời nhóm khi vượt quá:</span>
+              </label>
+              <div class="auto-leave-value-wrap">
+                <input type="number" id="autoLeavePendingLimitInput" min="1" step="1" value="10" title="Số lượng bài chờ tối đa" />
+                <span class="auto-leave-unit">bài đang chờ</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Quản Lý Danh Sách Nhóm Facebook -->
+    <section class="card">
+      <div class="card-header">
+        <div class="header-title-group">
+          <h2 class="card-title">👥 Nhóm</h2>
+          <span class="badge badge-clickable" id="groupCountBadge" title="Nhấn vào để sao chép toàn bộ link nhóm vào bộ nhớ tạm">0 nhóm</span>
+        </div>
+        <div class="card-actions">
+          <button type="button" class="btn btn-sm btn-primary" id="btnScanGroups" title="Quét toàn bộ nhóm đã tham gia trên tài khoản này">
+            🔍 Quét nhóm
+          </button>
+          <button type="button" class="btn btn-sm btn-outline" id="btnAddGroupManual" title="Duyệt và kiểm tra danh sách link nhóm">
+            🔍 Duyệt nhóm
+          </button>
+          <button type="button" class="btn btn-sm btn-outline" id="btnAddGroupPlus" title="Thêm danh sách link nhóm Facebook (mỗi link 1 dòng)">
+            ➕
+          </button>
+          <button type="button" class="btn btn-sm btn-outline btn-danger-ghost" id="btnClearGroups" title="Xóa các nhóm đã chọn">
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      <div class="group-filter-bar">
+        <label class="checkbox-label select-all-label">
+          <input type="checkbox" id="chkSelectAllGroups" checked />
+          <span class="checkbox-custom"></span>
+          <span>Tất cả</span>
+        </label>
+      </div>
+
+      <div class="group-list-container compact-list" id="groupListContainer">
+        <div class="empty-state compact" id="groupEmptyState">
+          <span class="empty-icon">👥</span>
+          <p class="empty-title">Chưa có nhóm</p>
+          <p class="empty-sub">Bấm "🔍 Quét nhóm" để tự nạp từ FB</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Điều Khiển & Tiến Trình (Nút Bắt đầu/Dừng nhỏ ở góc phải) -->
+    <section class="card">
+      <div class="card-header progress-card-header">
+        <div class="progress-title-wrap">
+          <h2 class="card-title">🚀 Tiến Trình</h2>
+          <span class="progress-percent" id="progressPercentText">0%</span>
+        </div>
+        <!-- Nút Lịch sử & Bắt đầu / Dừng nhỏ gọn đặt ở góc phải của Tiến Trình -->
+        <div class="header-controller-actions" id="controllerActions">
+          <button type="button" class="btn btn-sm btn-outline btn-action-history" id="btnViewHistory" title="Xem lịch sử các bài đã đăng">
+            <span class="btn-icon">📜</span> Lịch sử
+          </button>
+          <button type="button" class="btn btn-sm btn-success btn-action-start" id="btnStartPosting" title="Bắt đầu đăng bài tự động">
+            <span class="btn-icon">🚀</span> Bắt đầu
+          </button>
+          <button type="button" class="btn btn-sm btn-danger btn-action-stop" id="btnStopPosting" style="display: none;" title="Dừng đăng ngay lập tức">
+            <span class="btn-icon">⏹️</span> Dừng
+          </button>
+          <button type="button" class="btn btn-sm btn-primary btn-action-resume" id="btnResumePosting" style="display: none;" title="Tiếp tục đăng bài">
+            <span class="btn-icon">▶️</span> Tiếp tục
+          </button>
+        </div>
+      </div>
+
+      <!-- Thanh tiến trình -->
+      <div class="progress-section">
+        <div class="progress-status-text" id="progressStatusText">Chưa chạy</div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;"></div>
+        </div>
+        <div class="countdown-banner" id="countdownBanner" style="display: none;">
+          ⏳ <span id="countdownText">Đang nghỉ...</span>
+        </div>
+      </div>
+
+      <!-- Nhật ký thu gọn -->
+      <div class="log-section">
+        <div class="log-header">
+          <span class="log-title">Nhật ký</span>
+          <button type="button" class="btn-clear-log" id="btnClearLog">Xóa log</button>
+        </div>
+        <div class="log-box compact" id="logBox">
+          <div class="log-item info">💡 Sẵn sàng. Nhập bài viết và bấm 'Bắt đầu'!</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal Duyệt Nhóm Thủ Công -->
+    <div class="modal-backdrop" id="manualGroupModal" style="display: none;">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">🔍 Duyệt Danh Sách Nhóm</h3>
+          <button type="button" class="btn-close-modal" id="btnCloseModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <textarea id="manualGroupTextarea" rows="6" spellcheck="false" placeholder="Dán danh sách đường dẫn nhóm Facebook vào đây (mỗi link 1 dòng)...&#10;https://www.facebook.com/groups/123456789/&#10;https://www.facebook.com/groups/group_name/"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline" id="btnCancelModal">Đóng</button>
+          <button type="button" class="btn btn-sm btn-primary" id="btnSaveManualGroups">🔍 Duyệt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Thêm Danh Sách Nhóm Bằng Link (+) -->
+    <div class="modal-backdrop" id="addGroupsModal" style="display: none;">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">➕ Thêm Danh Sách Nhóm</h3>
+          <button type="button" class="btn-close-modal" id="btnCloseAddGroupsModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
+            Dán danh sách đường dẫn nhóm Facebook vào ô bên dưới (mỗi link 1 dòng). Hệ thống sẽ tự động kiểm tra xem bạn đã tham gia nhóm chưa, tự lấy tên nhóm và lọc bỏ trùng lặp:
+          </p>
+          <textarea id="addGroupsTextarea" rows="7" spellcheck="false" placeholder="Dán link nhóm Facebook vào đây (mỗi link 1 dòng)...&#10;https://www.facebook.com/groups/123456789/&#10;https://www.facebook.com/groups/group_name/"></textarea>
+          <div id="addGroupsStatus" style="display: none; margin-top: 8px; font-size: 11.5px; color: #60a5fa; font-weight: 500;"></div>
+          <div id="addGroupsResults" class="add-groups-results-container" style="display: none;"></div>
+        </div>
+        <div class="modal-footer" style="justify-content: flex-end;">
+          <button type="button" class="btn btn-sm btn-primary" id="btnConfirmAddGroups">➕ Thêm vào danh sách</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Lịch Sử Đăng Bài -->
+    <div class="modal-backdrop" id="historyModal" style="display: none;">
+      <div class="modal-dialog history-modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">📜 Lịch Sử Đăng Bài</h3>
+          <button type="button" class="btn-close-modal" id="btnCloseHistoryModal">✕</button>
+        </div>
+        <div class="modal-body history-modal-body">
+          <div class="history-list-container" id="historyListContainer">
+            <div class="empty-state compact" id="historyEmptyState">
+              <span class="empty-icon">📜</span>
+              <p class="empty-title">Chưa có lịch sử</p>
+              <p class="empty-sub">Lịch sử các phiên đăng bài sẽ được tự động lưu an toàn tại đây</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer history-modal-footer">
+          <button type="button" class="btn btn-sm btn-outline btn-danger-ghost" id="btnClearHistory" title="Xóa toàn bộ lịch sử đăng bài">🗑️ Xóa lịch sử</button>
+          <button type="button" class="btn btn-sm btn-primary" id="btnCancelHistoryModal">Đóng</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nút Làm Mới Nổi ở góc trái dưới -->
+    <button type="button" class="btn-floating-reset" id="btnFloatingReset" title="Làm mới nội dung & đặt lại tiến trình để đăng bài mới">
+      <span class="floating-reset-icon">🔄</span>
+      <span class="floating-reset-text">Làm mới</span>
+    </button>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toastNotification" style="display: none;"></div>
+
+    <!-- Banner hỏi xóa nhóm đã rời -->
+    <div class="left-groups-banner" id="leftGroupsBanner" style="display: none;">
+      <div class="left-groups-banner-content">
+        <span class="left-groups-banner-icon">🚪</span>
+        <span class="left-groups-banner-text">Có <strong id="leftGroupsCount">0</strong> nhóm đã tự động rời. Xóa khỏi danh sách?</span>
+      </div>
+      <div class="left-groups-banner-actions">
+        <button type="button" class="btn btn-sm btn-danger-ghost left-groups-btn-remove" onclick="removeLeftGroups()" title="Xóa tất cả nhóm đã rời">🗑️ Xóa</button>
+        <button type="button" class="btn-close-banner" onclick="dismissLeftGroupsBanner()" title="Để sau">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal / Màn Hình Khóa Kích Hoạt Bản Quyền -->
+  <div class="modal-backdrop license-modal-backdrop" id="licenseModal" style="display: none;">
+    <div class="modal-dialog license-modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">🛡️ Kích Hoạt Bản Quyền FB Auto Poster</h3>
+        <button type="button" class="btn-close-modal" id="btnCloseLicenseModal" style="display: none;">✕</button>
+      </div>
+      <form id="licenseActivationForm">
+        <div class="modal-body">
+          <div class="license-modal-desc">
+            Mỗi mã License Key chỉ được sử dụng trên <b>1 máy tính duy nhất</b>.
+          </div>
+
+          <!-- Thông tin mã máy nhận diện tự động -->
+          <div class="machine-id-card">
+            <div class="machine-id-label">🖥️ Mã Máy Tính Của Bạn:</div>
+            <div class="machine-id-value-wrap">
+              <span id="displayMachineId" class="machine-id-text">Đang nhận diện máy...</span>
+              <button type="button" class="btn-copy-machine-id" id="btnCopyMachineId" title="Sao chép mã máy">📋</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 12px;">
+            <label for="inputLicenseKey" style="font-size: 12px; font-weight: 600; color: #c9d1d9; display: block; margin-bottom: 6px;">
+              Mã License Key *
+            </label>
+            <input 
+              type="text" 
+              id="inputLicenseKey" 
+              class="form-control" 
+              placeholder="Ví dụ: FBPOSTER-XXXX-YYYY" 
+              required 
+              autocomplete="off"
+              spellcheck="false"
+              style="width: 100%; font-family: monospace; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; padding: 8px 10px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #58a6ff; box-sizing: border-box;"
+            />
+          </div>
+
+          <div id="licenseAlertBox" class="license-alert-box" style="display: none;"></div>
+        </div>
+        <div class="modal-footer" style="flex-direction: column; gap: 8px; border-top: 1px solid #30363d; padding: 12px 16px;">
+          <button type="submit" class="btn btn-primary" id="btnSubmitLicense" style="width: 100%; padding: 10px; font-size: 13px; font-weight: 600;">
+            🚀 Kích Hoạt Ngay
+          </button>
+          <button type="button" class="btn btn-outline" id="btnLogoutLicense" style="width: 100%; padding: 8px; font-size: 12px; color: #f85149; border-color: rgba(248, 81, 73, 0.4); display: none;" title="Gỡ bỏ key khỏi Profile Chrome này">
+            🚪 Đăng Xuất Key Khỏi Profile Này
+          </button>
+          <div style="font-size: 11px; color: #8b949e; text-align: center; line-height: 1.4;">
+            Chưa có key? Liên hệ Admin qua Zalo/SĐT để nhận mã dùng thử hoặc mua bản quyền.
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="window.js"></script>
+</body>
+</html>
