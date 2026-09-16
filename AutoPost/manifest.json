@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "FB Auto Poster - Đăng Bài Tự Động Facebook",
+  "version": "1.0.3",
+  "description": "Tự động đăng bài viết kèm ảnh lên Trang cá nhân và các Nhóm Facebook tuần tự với thời gian nghỉ an toàn cho từng Profile Chrome.",
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "unlimitedStorage",
+    "tabs",
+    "scripting",
+    "activeTab",
+    "identity",
+    "system.cpu",
+    "system.memory"
+  ],
+  "host_permissions": [
+    "https://*.facebook.com/*",
+    "https://*.vercel.app/*"
+  ],
+  "action": {
+    "default_title": "Mở Bảng Điều Khiển FB Auto Poster"
+  },
+  "side_panel": {
+    "default_path": "window.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.facebook.com/*"],
+      "js": ["content_fb_poster.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "window.html",
+        "window.css",
+        "window.js",
+        "device_identity.json"
+      ],
+      "matches": [
+        "https://*.facebook.com/*"
+      ]
+    }
+  ]
+}
