@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Trích Xuất Bài Báo & Quản Lý Page",
+  "version": "1.0.4",
+  "description": "Tự động phân tích link bài báo tiếng Việt, trích xuất nguồn, tiêu đề, nội dung và chọn ảnh tham chiếu trong cửa sổ riêng biệt.",
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "unlimitedStorage",
+    "tabs",
+    "activeTab",
+    "identity",
+    "scripting",
+    "system.cpu",
+    "system.memory"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://gemini.google.com/*"],
+      "js": ["gemini_bridge.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "side_panel": {
+    "default_path": "window.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Bật/Ẩn Bảng Trích Xuất & Tóm Tắt Bài Báo"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "window.html",
+        "window.css",
+        "window.js",
+        "device_identity.json"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}
