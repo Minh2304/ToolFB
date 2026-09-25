@@ -1,0 +1,9 @@
+{
+  "name": "toolfb",
+  "version": "1.0.5",
+  "description": "ToolFB Extension Suite",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Minh2304/ToolFB.git"
+  }
+}
