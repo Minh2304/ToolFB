@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GenImage</title>
+  <link rel="stylesheet" href="window.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+      <div class="nav-tabs">
+        <button id="navTabMain" class="nav-tab active" data-tab="main">
+          🍌 Tạo Ảnh
+        </button>
+        <button id="navTabHistory" class="nav-tab" data-tab="history">
+          📜 Lịch Sử
+          <span class="badge-tab-count" id="tabHistoryCountBadge">0</span>
+        </button>
+      </div>
+      <div class="top-nav-right">
+        <span class="header-customer-name" id="headerCustomerName" title="Tên khách hàng sở hữu bản quyền">Chưa kích
+          hoạt</span>
+        <button type="button" class="btn-key-config" id="btnOpenLicenseModal" title="Cấu hình Key bản quyền">
+          ⚙️ Key
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+
+      <!-- ================= TAB 1: TẠO ẢNH ================= -->
+      <div id="tabContentMain" class="tab-pane active">
+
+        <!-- 1. Ảnh Nhân Vật + Số lượng N + Prompt Bộ Đồ -->
+        <section class="card">
+          <div class="character-config-grid">
+            <!-- Cột trái: Ảnh nhân vật -->
+            <div class="char-upload-col">
+              <input type="file" id="charImageInput" accept="image/*" class="hidden">
+              <div id="charDropZone" class="char-drop-zone" title="Chọn hoặc dán (Ctrl+V) ảnh nhân vật">
+                <div id="charDropEmpty" class="char-drop-empty">
+                  <div class="char-drop-icon">🧑📸</div>
+                  <div class="char-drop-title">Ảnh Nhân Vật</div>
+                </div>
+                <div id="charPreviewWrap" class="char-preview-wrap hidden">
+                  <img id="charPreviewImg" class="char-preview-img" src="" alt="Nhân vật">
+                  <button type="button" id="btnRemoveCharImg" class="btn-remove-video-corner" title="Xóa ảnh">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cột phải: Số lượng N, Chọn Model (Gemini / Muse) & Prompt bộ đồ -->
+            <div class="char-settings-col">
+              <div class="config-inline-row" style="justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <label for="numImagesInput" class="sub-label">Số lượng:</label>
+                    <input type="number" id="numImagesInput" class="delay-input" value="4" min="1" max="50" step="1">
+                  </div>
+
+                  <!-- Nút Switch chọn Model: Gemini vs Muse -->
+                  <div class="model-switch-group" id="modelSwitchGroup" title="Chuyển đổi giữa API Gemini (Nano Banana) và API Meta Muse (muse-image-1.0)">
+                    <button type="button" id="btnModelGemini" class="model-switch-btn active" data-provider="gemini">
+                      🍌 Gemini
+                    </button>
+                    <button type="button" id="btnModelMuse" class="model-switch-btn" data-provider="muse">
+                      🎨 Muse
+                    </button>
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <span id="cookieStatusDot" class="status-dot dot-checking" title="Trạng thái kết nối"></span>
+                  <span id="cookieStatusText" style="font-size: 10.5px; color: #94a3b8;">Cookie</span>
+                  <button type="button" id="btnRefreshCookie" class="btn btn-secondary btn-xs"
+                    title="Làm mới trạng thái Cookie / Phiên kết nối">🔄</button>
+                  <button type="button" id="btnResetAll" class="btn btn-reset-posts btn-xs"
+                    title="Làm mới dữ liệu">🗑️</button>
+                </div>
+              </div>
+
+              <!-- Thanh nhập API Key Muse tùy chọn (Chỉ hiện khi bật Switch sang Muse) -->
+              <div id="museConfigRow" class="muse-config-row hidden">
+                <span class="muse-badge-tag">muse-image-1.0</span>
+                <input type="password" id="museApiKeyInput" class="muse-apikey-input"
+                  placeholder="API Key Muse (Tùy chọn - để trống sẽ tự dùng Cookie meta.ai)...">
+                <button type="button" id="btnToggleMuseKeyVis" class="btn btn-secondary btn-xs" title="Hiện/Ẩn API Key">👁️</button>
+              </div>
+
+              <textarea id="outfitThemeInput" class="theme-textarea" rows="4"
+                placeholder="Nhập Prompt các kiểu bộ đồ cần tạo (để trống nếu muốn AI tự động phối đồ)..."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. Thư mục lưu & Tải ảnh đã chọn -->
+        <section class="card card-compact card-folder">
+          <div class="folder-picker-row" style="margin-bottom: 6px;">
+            <div class="folder-display-box" id="folderDisplayBox">
+              <span class="folder-icon">📁</span>
+              <div id="selectedFolderText" class="folder-path-value">Chưa chọn thư mục lưu</div>
+            </div>
+            <button type="button" id="btnPickFolder" class="btn btn-scan btn-xs">
+              📂 Chọn thư mục
+            </button>
+          </div>
+
+          <div class="download-toolbar">
+            <label
+              style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #cbd5e1; cursor: pointer;">
+              <input type="checkbox" id="chkSelectAllImgs" class="page-checkbox">
+              <span>Chọn tất cả</span>
+            </label>
+            <button type="button" id="btnDownloadSelected" class="btn btn-batch-video btn-xs" disabled>
+              📥 Tải ảnh đã chọn (0)
+            </button>
+          </div>
+        </section>
+
+        <!-- 3. Danh sách N Bộ Đồ & Kết Quả -->
+        <section class="card">
+          <div id="outfitListContainer" class="page-list-container">
+            <div class="empty-state">
+              Chưa có ảnh. Hãy chọn <b>Ảnh Nhân Vật</b> và bấm <b>Bắt đầu tạo ảnh</b>.
+            </div>
+          </div>
+        </section>
+
+        <!-- Nhật ký gọn (Ẩn khi chưa chạy) -->
+        <section id="progressSection" class="card progress-card hidden">
+          <div id="logContainer" class="log-container"></div>
+        </section>
+
+      </div>
+
+      <!-- ================= TAB 2: LỊCH SỬ ================= -->
+      <div id="tabContentHistory" class="tab-pane hidden">
+        <section class="card">
+          <div class="section-header">
+            <label class="section-label" style="font-size: 12px;">📜 Lịch Sử</label>
+            <button id="btnClearHistory" class="btn btn-danger-outline btn-xs">🗑️ Xóa tất cả</button>
+          </div>
+          <div id="historyListContainer" class="history-list-container">
+            <div class="empty-state">Chưa có lịch sử.</div>
+          </div>
+        </section>
+      </div>
+
+    </main>
+
+    <!-- Modal Phóng To Xem Ảnh (Hỗ trợ Zoom In/Out, Kéo giữ Pan & Thông số chi tiết) -->
+    <div id="imagePreviewModal" class="modal-overlay hidden">
+      <div class="modal-box modal-box-preview-center">
+        <div class="modal-header preview-modal-header">
+          <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+            <h3 id="previewModalTitle" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">👁️ Xem Chi Tiết Ảnh</h3>
+            <span id="previewZoomBadge" class="preview-zoom-badge">100%</span>
+          </div>
+          <div class="preview-zoom-toolbar">
+            <button type="button" id="btnZoomOut" class="btn btn-secondary btn-xs" title="Thu nhỏ (-)">➖</button>
+            <button type="button" id="btnZoomReset" class="btn btn-secondary btn-xs" title="Kích thước 100%">100%</button>
+            <button type="button" id="btnZoomIn" class="btn btn-secondary btn-xs" title="Phóng to (+)">➕</button>
+            <button type="button" id="btnClosePreviewModal" class="btn-close-modal" title="Đóng (ESC)">&times;</button>
+          </div>
+        </div>
+
+        <div class="preview-modal-content-grid">
+          <!-- Khung xem ảnh có Zoom & Kéo (Pan) -->
+          <div id="previewImageViewport" class="preview-image-viewport" title="Cuộn chuột để Zoom In/Out, giữ chuột kéo để di chuyển ảnh">
+            <img id="modalPreviewImage" src="" alt="Preview" class="modal-full-img" draggable="false">
+            <div class="preview-viewport-hint">🔍 Lăn chuột để Zoom • Giữ chuột kéo để di chuyển • Nhấp đúp để phóng đại</div>
+          </div>
+
+          <!-- Bảng thông số chi tiết của ảnh -->
+          <div class="preview-specs-panel">
+            <div class="preview-specs-title">📊 Thông Số Chi Tiết Ảnh</div>
+            <div class="preview-specs-grid">
+              <div class="preview-spec-item">
+                <span class="spec-label">📐 Kích thước:</span>
+                <span id="specResolution" class="spec-value">Đang đo...</span>
+              </div>
+              <div class="preview-spec-item">
+                <span class="spec-label">🖼️ Tỷ lệ khung:</span>
+                <span id="specAspectRatio" class="spec-value">--</span>
+              </div>
+              <div class="preview-spec-item">
+                <span class="spec-label">💾 Dung lượng:</span>
+                <span id="specFileSize" class="spec-value">--</span>
+              </div>
+              <div class="preview-spec-item">
+                <span class="spec-label">🏷️ Định dạng:</span>
+                <span id="specFormat" class="spec-value">PNG</span>
+              </div>
+              <div class="preview-spec-item">
+                <span class="spec-label">🕒 Thời gian tạo:</span>
+                <span id="specCreatedAt" class="spec-value">--</span>
+              </div>
+            </div>
+
+            <div class="preview-prompt-section">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span class="spec-label">📝 Câu lệnh bộ đồ (Prompt):</span>
+                <button type="button" id="btnCopyPreviewPrompt" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 10px;">📋 Copy</button>
+              </div>
+              <div id="specPromptText" class="preview-prompt-box"></div>
+            </div>
+
+            <div class="preview-modal-actions">
+              <button type="button" id="btnModalRegenerate" class="btn btn-scan" style="flex: 1; padding: 7px 10px;">🔄 Tạo lại ảnh</button>
+              <button type="button" id="btnModalDownload" class="btn btn-batch-video" style="flex: 1; padding: 7px 10px;">📥 Tải ảnh về</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thông báo nhỏ (Toast) khi tải ảnh xong -->
+    <div id="toastNotification" class="toast-notification hidden">
+      <span id="toastNotificationText"></span>
+    </div>
+
+    <!-- Footer Action Buttons -->
+    <footer class="app-footer">
+      <button id="btnStartFullFlow" class="btn btn-start full-width">
+        🚀 BẮT ĐẦU TẠO ẢNH
+      </button>
+      <button id="btnStopFlow" class="btn btn-stop full-width hidden">
+        ⏹️ DỪNG
+      </button>
+    </footer>
+
+    <!-- ================= MODAL KÍCH HOẠT BẢN QUYỀN ================= -->
+    <div class="modal-backdrop license-modal-backdrop" id="licenseModal" style="display: none;">
+      <div class="modal-dialog license-modal-dialog">
+        <div class="modal-header" style="padding: 12px 16px; border-bottom: 1px solid #30363d; margin-bottom: 0;">
+          <h3 class="modal-title" style="font-size: 13.5px; font-weight: 700; color: #f0f6fc;">🛡️ Kích Hoạt Bản Quyền
+            GenImage</h3>
+          <button type="button" class="btn-close-modal" id="btnCloseLicenseModal" style="display: none;">✕</button>
+        </div>
+        <form id="licenseActivationForm">
+          <div class="modal-body" style="padding: 14px 16px;">
+            <div class="license-modal-desc">
+              Mỗi mã License Key chỉ được sử dụng trên <b>1 máy tính duy nhất</b>.
+            </div>
+
+            <div class="machine-id-card">
+              <div class="machine-id-label">🖥️ Mã Máy Tính Của Bạn:</div>
+              <div class="machine-id-value-wrap">
+                <span id="displayMachineId" class="machine-id-text">Đang nhận diện máy...</span>
+                <button type="button" class="btn-copy-machine-id" id="btnCopyMachineId"
+                  title="Sao chép mã máy">📋</button>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 12px;">
+              <label for="inputLicenseKey"
+                style="font-size: 12px; font-weight: 600; color: #c9d1d9; display: block; margin-bottom: 6px;">
+                Mã License Key *
+              </label>
+              <input type="text" id="inputLicenseKey" class="form-control" placeholder="Ví dụ: FBPOSTER-XXXX-YYYY"
+                required autocomplete="off" spellcheck="false"
+                style="width: 100%; font-family: monospace; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; padding: 8px 10px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #58a6ff; box-sizing: border-box;" />
+            </div>
+
+            <div id="licenseAlertBox" class="license-alert-box" style="display: none;"></div>
+          </div>
+          <div class="modal-footer"
+            style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #30363d; padding: 12px 16px;">
+            <button type="submit" class="btn btn-primary" id="btnSubmitLicense"
+              style="width: 100%; padding: 10px; font-size: 13px; font-weight: 600;">
+              🚀 Kích Hoạt Ngay
+            </button>
+            <button type="button" class="btn btn-outline" id="btnLogoutLicense"
+              style="width: 100%; padding: 8px; font-size: 12px; color: #f85149; border-color: rgba(248, 81, 73, 0.4); display: none;"
+              title="Gỡ bỏ key khỏi Profile Chrome này">
+              🚪 Đăng Xuất Key Khỏi Profile Này
+            </button>
+            <div style="font-size: 11px; color: #8b949e; text-align: center; line-height: 1.4;">
+              Chưa có key? Liên hệ Admin qua Zalo/SĐT để nhận mã dùng thử hoặc mua bản quyền.
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="window.js"></script>
+</body>
+
+</html>

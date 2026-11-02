@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post Video</title>
+  <link rel="stylesheet" href="window.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Navigation Bar (Tương tự AutoPost) -->
+    <header class="top-nav">
+      <div class="nav-tabs">
+        <button id="navTabPost" class="nav-tab active" data-tab="post">
+          🎬 Đăng Video
+        </button>
+        <button id="navTabHistory" class="nav-tab" data-tab="history">
+          📜 Lịch Sử
+          <span class="badge-tab-count" id="tabHistoryCountBadge">0</span>
+        </button>
+      </div>
+      <div class="top-nav-right">
+        <span class="header-customer-name" id="headerCustomerName" title="Tên khách hàng sở hữu bản quyền">Chưa kích hoạt</span>
+        <span class="badge badge-ext-count" id="headerExtCount" style="display: none;" title="Số extension đang chạy trên máy này"></span>
+        <button type="button" class="btn-key-config" id="btnOpenLicenseModal" title="Nhấn vào để cấu hình hoặc xem thông tin Key">
+          ⚙️ Key
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Scrollable Content -->
+    <main class="main-content">
+
+      <!-- ================= TAB 1: POST VIDEO FANPAGE ================= -->
+      <div id="tabContentPost" class="tab-pane active">
+
+        <!-- 1. Danh sách Fanpage (Ở trên) -->
+        <section class="card">
+          <div class="toolbar">
+            <button id="btnScanPages" class="btn btn-scan">
+              🔍 Quét trang từ FB
+            </button>
+            <button id="btnAddPage" class="btn btn-add-page" title="Thêm lại trang từ danh sách đã quét">
+              ➕
+            </button>
+            <button id="btnResetPosts" class="btn btn-reset-posts" style="margin-left: auto;" title="Làm mới: xoá toàn bộ video & caption đã nhập trên các trang">
+              🔄 Làm mới
+            </button>
+          </div>
+
+          <!-- Danh sách Box từng Trang (Trái: Video + Thumbnail, Phải: Caption) -->
+          <div id="pageListContainer" class="page-list-container">
+            <div class="empty-state">
+              Bấm <b>"🔍 Quét trang từ FB"</b> để lấy danh sách Fanpage.
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. Cài đặt độ trễ theo phút (Ở dưới) -->
+        <section class="card card-compact">
+          <div class="delay-config-row">
+            <span class="delay-label">⏱️ Độ trễ giữa các vòng (phút):</span>
+            <input type="number" id="delayMinutesInput" class="delay-input" value="1" min="0" max="1440" step="0.5">
+          </div>
+        </section>
+
+        <!-- Modal Thêm Lại Trang Đã Quét (+) -->
+        <div id="addPagesModal" class="modal-overlay hidden">
+          <div class="modal-box">
+            <div class="modal-header">
+              <h3>➕ Thêm Trang</h3>
+              <button id="btnCloseModal" class="btn-close-modal" title="Đóng">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div id="savedPagesPoolList" class="saved-pages-pool"></div>
+              <div class="manual-add-row">
+                <input type="text" id="manualPagesInput" class="manual-page-input" placeholder="Hoặc nhập tên / URL trang...">
+                <button id="btnConfirmAddPages" class="btn btn-primary">Thêm</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Xem Thử Video Đơn Lẻ -->
+        <div id="videoPreviewModal" class="modal-overlay hidden">
+          <div class="modal-box">
+            <div class="modal-header">
+              <h3 id="previewModalTitle">👁️ Xem Thử Video</h3>
+              <button id="btnClosePreviewModal" class="btn-close-modal" title="Đóng">&times;</button>
+            </div>
+            <div class="modal-body" style="align-items: center;">
+              <video id="singlePreviewVideoPlayer" controls style="width: 100%; max-height: 260px; border-radius: 6px; background: #000;"></video>
+              <div id="previewModalMeta" class="hint-text" style="text-align: center;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nhật ký hoạt động (Log) -->
+        <section id="progressSection" class="card progress-card hidden">
+          <div id="logContainer" class="log-container"></div>
+        </section>
+
+      </div>
+
+      <!-- ================= TAB 2: LỊCH SỬ (TƯƠNG TỰ AUTOPOST) ================= -->
+      <div id="tabContentHistory" class="tab-pane hidden">
+        <section class="card">
+          <div class="section-header">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label class="section-label" style="font-size: 12px;">📜 Lịch Sử Đăng Video</label>
+              <span class="badge" style="background: rgba(255,255,255,0.1); color: #94a3b8; border: none;">10 phiên gần nhất</span>
+            </div>
+            <button id="btnClearHistory" class="btn btn-danger-outline" title="Xóa toàn bộ lịch sử">🗑️ Xóa tất cả</button>
+          </div>
+          <div id="historyListContainer" class="history-list-container">
+            <div class="empty-state">Chưa có lịch sử đăng video.</div>
+          </div>
+        </section>
+      </div>
+
+    </main>
+
+    <!-- Sticky Footer Action Buttons -->
+    <footer class="app-footer">
+      <button id="btnStartPost" class="btn btn-start full-width">
+        🚀 BẮT ĐẦU ĐĂNG VIDEO
+      </button>
+      <button id="btnStopPost" class="btn btn-stop full-width hidden">
+        ⏹️ TẠM DỪNG
+      </button>
+      <button id="btnResumePost" class="btn btn-resume full-width hidden">
+        ▶️ TIẾP TỤC ĐĂNG
+      </button>
+    </footer>
+
+    <!-- ================= MODAL KÍCH HOẠT BẢN QUYỀN (TƯƠNG TỰ AUTOPOST) ================= -->
+    <div class="modal-backdrop license-modal-backdrop" id="licenseModal" style="display: none;">
+      <div class="modal-dialog license-modal-dialog">
+        <div class="modal-header" style="padding: 12px 16px; border-bottom: 1px solid #30363d; margin-bottom: 0;">
+          <h3 class="modal-title" style="font-size: 13.5px; font-weight: 700; color: #f0f6fc;">🛡️ Kích Hoạt Bản Quyền Post Video</h3>
+          <button type="button" class="btn-close-modal" id="btnCloseLicenseModal" style="display: none;">✕</button>
+        </div>
+        <form id="licenseActivationForm">
+          <div class="modal-body" style="padding: 14px 16px;">
+            <div class="license-modal-desc">
+              Mỗi mã License Key chỉ được sử dụng trên <b>1 máy tính duy nhất</b>.
+            </div>
+
+            <!-- Thông tin mã máy nhận diện tự động -->
+            <div class="machine-id-card">
+              <div class="machine-id-label">🖥️ Mã Máy Tính Của Bạn:</div>
+              <div class="machine-id-value-wrap">
+                <span id="displayMachineId" class="machine-id-text">Đang nhận diện máy...</span>
+                <button type="button" class="btn-copy-machine-id" id="btnCopyMachineId" title="Sao chép mã máy">📋</button>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 12px;">
+              <label for="inputLicenseKey" style="font-size: 12px; font-weight: 600; color: #c9d1d9; display: block; margin-bottom: 6px;">
+                Mã License Key *
+              </label>
+              <input
+                type="text"
+                id="inputLicenseKey"
+                class="form-control"
+                placeholder="Ví dụ: FBPOSTER-XXXX-YYYY"
+                required
+                autocomplete="off"
+                spellcheck="false"
+                style="width: 100%; font-family: monospace; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; padding: 8px 10px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #58a6ff; box-sizing: border-box;"
+              />
+            </div>
+
+            <div id="licenseAlertBox" class="license-alert-box" style="display: none;"></div>
+          </div>
+          <div class="modal-footer" style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #30363d; padding: 12px 16px;">
+            <button type="submit" class="btn btn-primary" id="btnSubmitLicense" style="width: 100%; padding: 10px; font-size: 13px; font-weight: 600;">
+              🚀 Kích Hoạt Ngay
+            </button>
+            <button type="button" class="btn btn-outline" id="btnLogoutLicense" style="width: 100%; padding: 8px; font-size: 12px; color: #f85149; border-color: rgba(248, 81, 73, 0.4); display: none;" title="Gỡ bỏ key khỏi Profile Chrome này">
+              🚪 Đăng Xuất Key Khỏi Profile Này
+            </button>
+            <div style="font-size: 11px; color: #8b949e; text-align: center; line-height: 1.4;">
+              Chưa có key? Liên hệ Admin qua Zalo/SĐT để nhận mã dùng thử hoặc mua bản quyền.
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="window.js"></script>
+</body>
+</html>
