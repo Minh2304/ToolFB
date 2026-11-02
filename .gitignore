@@ -1,0 +1,5 @@
+node_modules/
+device_identity.json
+**/device_identity.json
+*.log
+.vscode/
