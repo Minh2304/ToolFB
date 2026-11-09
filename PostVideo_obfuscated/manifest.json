@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Post Video - Đăng Video Fanpage Tự Động",
+  "version": "1.1.0",
+  "description": "Công cụ tự động duyệt danh sách Fanpage (loại trừ trang cá nhân) và đăng Video kèm Caption riêng biệt cho từng Trang với độ trễ cài đặt sẵn, tối ưu bộ nhớ.",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "scripting",
+    "storage",
+    "unlimitedStorage",
+    "sidePanel"
+  ],
+  "side_panel": {
+    "default_path": "window.html"
+  },
+  "host_permissions": [
+    "https://*.facebook.com/*",
+    "https://license-server-ruddy-phi.vercel.app/*",
+    "file:///*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Mở Bảng Điều Khiển Post Video Fanpage"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.facebook.com/*",
+        "https://m.facebook.com/*",
+        "https://mbasic.facebook.com/*"
+      ],
+      "js": ["content_fb_video.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["window.html", "device_identity.json"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "manifest_version": 3,
+  "name": "GenImage - Tạo Ảnh Nano Banana",
+  "version": "1.2.2",
+  "description": "Công cụ tạo N bộ đồ và gọi trực tiếp API Network của Nano Banana bằng Cookie đang đăng nhập (không mở tab).",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "scripting",
+    "storage",
+    "unlimitedStorage",
+    "sidePanel",
+    "cookies",
+    "downloads",
+    "nativeMessaging",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+  ],
+  "side_panel": {
+    "default_path": "window.html"
+  },
+  "host_permissions": [
+    "https://*.google.com/*",
+    "https://labs.google/*",
+    "https://*.labs.google/*",
+    "https://aisandbox-pa.googleapis.com/*",
+    "https://*.googleusercontent.com/*",
+    "https://*.meta.ai/*",
+    "https://meta.ai/*",
+    "https://*.fbcdn.net/*",
+    "https://*.facebook.com/*",
+    "https://license-server-ruddy-phi.vercel.app/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Mở GenImage"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://labs.google/*"
+      ],
+      "js": ["flow_bridge.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "window.html",
+        "window.css",
+        "window.js",
+        "device_identity.json"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
