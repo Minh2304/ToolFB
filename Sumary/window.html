@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>Trích Xuất Nội Dung Báo & Quản Lý Page</title>
+  <link rel="stylesheet" href="window.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Top Bar: Navigation Tabs & License Info -->
+    <header class="top-nav-bar">
+      <nav class="app-tabs">
+        <button type="button" class="tab-btn active" id="tabBtnExtract" data-tab="tabExtract">
+          <span class="tab-icon">📰</span> Trích xuất bài báo
+        </button>
+        <button type="button" class="tab-btn" id="tabBtnGemini" data-tab="tabGeminiConfig">
+          <span class="tab-icon">💎</span> Cấu hình Gem Web
+        </button>
+      </nav>
+      <div class="header-license-wrap" style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+        <span id="headerCustomerName" class="header-customer-badge" title="Thông tin bản quyền"
+          style="font-size: 11px; font-weight: 500; color: #8b949e; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Chưa
+          kích hoạt</span>
+        <button type="button" id="btnOpenLicenseModal" class="btn-key-config" title="Quản lý bản quyền / Nhập mã Key">🔑
+          Key</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-body">
+      <!-- TAB 1: TRÍCH XUẤT BÀI BÁO (GIỮ NGUYÊN HIỆN TẠI) -->
+      <div class="tab-content active" id="tabExtract">
+        <!-- 1. Top Section: Link báo, Nguồn báo & Tên Page -->
+        <section class="card top-meta-card">
+          <div class="top-row-grid">
+            <!-- Cột 1: Link báo -->
+            <div class="meta-field link-field">
+              <div class="input-header">
+                <label for="urlInput" class="section-label" style="margin-bottom: 0;">
+                  <span class="label-icon">🔗</span> Link báo
+                </label>
+                <button type="button" class="btn-quick-tab" id="btnGetActiveTabUrl"
+                  title="Tự động lấy link từ tab bài báo đang mở bên cạnh">
+                  ⚡ Lấy tab đang xem
+                </button>
+              </div>
+              <div class="input-wrapper">
+                <input type="url" id="urlInput"
+                  placeholder="Dán link bài báo (Dân Trí, VnExpress, Tuổi Trẻ, Thanh Niên...)..." autocomplete="off"
+                  spellcheck="false" />
+                <div class="spinner" id="loadingSpinner" style="display: none;"></div>
+              </div>
+              <div class="status-message" id="statusMessage"></div>
+            </div>
+
+            <!-- Cột 2: Nguồn báo -->
+            <div class="meta-field source-field">
+              <div class="input-header">
+                <label for="sourceInput" class="section-label" style="margin-bottom: 0;">
+                  <span class="label-icon">🏷️</span> Nguồn báo
+                </label>
+              </div>
+              <div class="field-with-hint">
+                <input type="text" id="sourceInput" placeholder="Tự động nhận diện hoặc nhập tay..."
+                  value="Báo Dân Trí" />
+              </div>
+            </div>
+
+            <!-- Cột 3: Tên Page -->
+            <div class="meta-field page-field">
+              <div class="input-header page-label-row">
+                <label for="pageSelect" class="section-label" style="margin-bottom: 0;">
+                  <span class="label-icon">🚩</span> Tên Page
+                </label>
+                <div class="page-actions">
+                  <button type="button" class="btn-icon" id="btnAddPage" title="Thêm Page mới">➕</button>
+                  <button type="button" class="btn-icon text-danger" id="btnDeletePage"
+                    title="Xóa Page này">🗑️</button>
+                </div>
+              </div>
+              <select id="pageSelect">
+                <!-- Tùy chọn Page sẽ được sinh tự động từ chrome.storage -->
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Formatted Editable Textarea -->
+        <section class="card textarea-section">
+          <div class="section-header">
+            <div class="header-title-group">
+              <label for="contentOutput" class="section-label">
+                <span class="label-icon">📝</span> Nội dung chuẩn hóa (Có thể chỉnh sửa)
+              </label>
+              <span class="text-meta" id="wordCount">0 từ</span>
+            </div>
+            <div class="textarea-actions">
+              <button type="button" class="btn btn-secondary btn-sm" id="btnResetFormat"
+                title="Khôi phục lại nội dung gốc từ bài báo">
+                🔄 Tải lại mẫu
+              </button>
+              <button type="button" class="btn btn-secondary" id="btnCopy">
+                📋 Sao chép nội dung
+              </button>
+            </div>
+          </div>
+
+          <textarea id="contentOutput" rows="14" spellcheck="false"
+            placeholder="Nội dung bài báo sau khi phân tích sẽ xuất hiện tại đây theo định dạng chuẩn..."></textarea>
+        </section>
+
+        <!-- 4. Images Horizontal Strip -->
+        <section class="card images-section">
+          <div class="section-header">
+            <div class="header-title-group">
+              <label class="section-label">
+                <span class="label-icon">🖼️</span> Danh sách ảnh bài báo (Tích chọn 1 ảnh tham chiếu)
+              </label>
+              <span class="badge" id="imageCountBadge">0 ảnh</span>
+            </div>
+            <div class="image-actions">
+              <input type="file" id="localImageInput" accept="image/*" style="display: none;" />
+              <button type="button" class="btn btn-secondary btn-sm" id="btnUploadLocalImage"
+                title="Tải ảnh từ máy tính để đính kèm dạng file">
+                📁 Tải ảnh từ máy tính
+              </button>
+            </div>
+          </div>
+
+          <div class="image-strip-container">
+            <div class="image-strip" id="imageStrip">
+              <div class="empty-images">Chưa có ảnh nào. Hãy nhập link bài báo ở trên.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. Khối Nút Tóm Tắt Bài Báo (Gemini AI) -->
+        <section class="card ai-action-card">
+          <div class="ai-action-content">
+            <div class="ai-action-left">
+              <span class="ai-action-icon">✨</span>
+              <div>
+                <h3 class="ai-action-title">Tóm Tắt Bài Báo Qua Gem AI</h3>
+                <p class="ai-action-sub">
+                  Ảnh làm banner: <span id="aiAttachedImgLabel" class="text-warning">Chưa chọn ảnh</span>
+                </p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn btn-primary btn-ai-run" id="btnSummarizeArticle">
+                <span class="ai-btn-icon">⚡</span>
+                <span class="ai-btn-text">Tóm tắt qua Gem & Tạo ảnh 1:1 trên Tool</span>
+              </button>
+            </div>
+          </div>
+          <div class="ai-status-alert" id="aiStatusAlert" style="display: none;"></div>
+        </section>
+
+        <!-- 6. Khối Ô Text Chứa Thông Tin Bài Báo & Tóm Tắt Từ Gem AI -->
+        <section class="card ai-result-card" id="aiResultSection" style="display: none;">
+          <div class="section-header">
+            <div class="header-title-group">
+              <label for="aiResultText" class="section-label">
+                <span class="label-icon">🤖</span> Bản Tóm Tắt & Nội Dung Tạo Bởi Gem AI
+              </label>
+              <span class="badge badge-pulse" id="aiResultBadge">✓ Đã tóm tắt</span>
+            </div>
+            <div class="ai-result-actions">
+              <button type="button" class="btn btn-secondary btn-sm" id="btnCopyAiText"
+                title="Chỉ sao chép văn bản của ô tóm tắt">
+                📋 Sao chép
+              </button>
+              <button type="button" class="btn btn-primary btn-sm" id="btnCopyAiAll"
+                title="Sao chép cả Text và Ảnh được tạo để dán vào tool Auto Post">
+                📋 Sao chép tất cả
+              </button>
+            </div>
+          </div>
+
+          <textarea id="aiResultText" rows="12" spellcheck="false"
+            placeholder="Nội dung tóm tắt từ Gem AI sẽ xuất hiện tại đây..."></textarea>
+        </section>
+
+        <!-- 7. Khối Hiển Thị Ảnh Sau Tóm Tắt (2 Cột: Gemini AI & Tool 1:1) -->
+        <section class="card summary-images-section" id="bannerPreviewCard" style="display: none;">
+          <div class="section-header">
+            <div class="header-title-group">
+              <label class="section-label">
+                <span class="label-icon">🖼️</span> Hình Ảnh Sau Tóm Tắt (2 Cột: Gemini AI & Tool 1:1)
+              </label>
+              <span class="badge badge-pulse" id="imagesSectionBadge">2 Phiên bản ảnh</span>
+            </div>
+          </div>
+
+          <!-- Grid 2 Cột Song Song -->
+          <div class="summary-images-grid">
+            <!-- CỘT 1 (BÊN TRÁI): Ảnh do Gemini AI tạo -->
+            <div class="image-column-card gemini-col">
+              <div class="image-column-header">
+                <div class="col-title-group">
+                  <span class="col-icon">💎</span>
+                  <span class="col-title">Ảnh do Gemini tạo</span>
+                </div>
+                <div class="col-actions">
+                  <button type="button" class="btn-img-action" id="btnReloadGeminiImage"
+                    title="Tải lại từ đầu / Tóm tắt lại bài báo và tạo ảnh qua Gemini">
+                    🔄 <span class="btn-action-label">Tải lại</span>
+                  </button>
+                  <button type="button" class="btn-img-action" id="btnCopyGeminiImage"
+                    title="Sao chép ảnh Gemini vào Clipboard">
+                    📋 <span class="btn-action-label">Sao chép</span>
+                  </button>
+                  <button type="button" class="btn-img-action btn-img-primary" id="btnDownloadGeminiImage"
+                    title="Tải ảnh Gemini về máy">
+                    💾 <span class="btn-action-label">Tải xuống</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="image-display-frame" id="geminiImageFrame">
+                <img id="geminiOutputImg" class="result-img" alt="Ảnh từ Gemini AI" referrerpolicy="no-referrer"
+                  style="display: none;" />
+                <div class="image-placeholder" id="geminiImagePlaceholder">
+                  <div class="placeholder-icon">🤖</div>
+                  <div class="placeholder-text" id="geminiPlaceholderText">Chưa có ảnh từ Gemini</div>
+                  <div class="placeholder-hint">Bấm nút <strong>🔄 Tải lại</strong> ở trên để tạo lại từ đầu cùng Gem
+                  </div>
+                </div>
+                <div class="image-loading-overlay" id="geminiImageLoading" style="display: none;">
+                  <div class="spinner"></div>
+                  <div class="loading-label">Đang tải ảnh từ Gemini...</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CỘT 2 (BÊN PHẢI): Ảnh được tạo từ Tool (Canvas 1:1 UHD) -->
+            <div class="image-column-card tool-col">
+              <div class="image-column-header">
+                <div class="col-title-group">
+                  <span class="col-icon">🎨</span>
+                  <span class="col-title">Ảnh tạo từ Tool (1:1 Template)</span>
+                </div>
+                <div class="col-actions">
+                  <button type="button" class="btn-img-action" id="btnReloadToolImage"
+                    title="Tải lại để cập nhật ngay Tên Page, Tiêu đề hoặc Ảnh tham chiếu mới">
+                    🔄 <span class="btn-action-label">Tải lại</span>
+                  </button>
+                  <button type="button" class="btn-img-action" id="btnCopyBannerImage"
+                    title="Sao chép ảnh 1:1 vào Clipboard">
+                    📋 <span class="btn-action-label">Sao chép</span>
+                  </button>
+                  <button type="button" class="btn-img-action btn-img-primary" id="btnDownloadBannerImage"
+                    title="Tải ảnh 1:1 siêu nét về máy">
+                    💾 <span class="btn-action-label">Tải xuống</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="image-display-frame" id="toolImageFrame">
+                <canvas id="bannerCanvas" width="1200" height="1200" class="result-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div> <!-- /#tabExtract -->
+
+      <!-- TAB 2: CẤU HÌNH LIÊN KẾT GEM WEB -->
+      <div class="tab-content" id="tabGeminiConfig" style="display: none;">
+        <section class="card config-section">
+          <div class="section-header">
+            <div class="header-title-group">
+              <label for="geminiWebUrlInput" class="section-label">
+                <span class="label-icon">💎</span> Liên kết Gem (Gemini Web)
+              </label>
+              <span class="badge badge-pulse" id="gemWebStatusBadge">✓ Sẵn sàng</span>
+            </div>
+          </div>
+
+          <div class="api-key-input-row" style="margin-top: 12px;">
+            <div class="input-wrapper api-key-wrapper">
+              <input type="url" id="geminiWebUrlInput" value="https://gemini.google.com/gem/f9f03a867b20"
+                placeholder="https://gemini.google.com/gem/f9f03a867b20..." autocomplete="off" spellcheck="false" />
+            </div>
+            <button type="button" class="btn btn-primary" id="btnSaveGemUrl">💾 Lưu URL</button>
+            <button type="button" class="btn btn-secondary" id="btnTestGemWeb"
+              title="Mở và kiểm tra kết nối tới tab Gem">🧪 Mở Tab</button>
+          </div>
+        </section>
+
+        <!-- Phần Miêu tả mẫu -->
+        <section class="card config-section" style="margin-top: 16px;">
+          <div class="section-header">
+            <div class="header-title-group">
+              <label for="gemInstructionInput" class="section-label">
+                <span class="label-icon">📝</span> Miêu tả mẫu
+              </label>
+              <span class="badge" id="gemInstructionBadge">Chỉ đọc</span>
+            </div>
+            <div class="textarea-actions" style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-secondary btn-sm" id="btnCopyGemInstruction"
+                title="Sao chép toàn bộ nội dung miêu tả mẫu">
+                📋 Sao chép
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnEditGemInstruction"
+                title="Chỉnh sửa miêu tả mẫu">
+                ✏️ Sửa
+              </button>
+            </div>
+          </div>
+
+          <div style="margin-top: 12px;">
+            <textarea id="gemInstructionInput" rows="18" readonly spellcheck="false" placeholder="Nội dung miêu tả mẫu..."></textarea>
+          </div>
+        </section>
+
+        <!-- Phần Từ nhạy cảm (Sensitive Words) -->
+        <section class="card config-section" style="margin-top: 16px;">
+          <div class="section-header">
+            <div class="header-title-group">
+              <label for="sensitiveWordsInput" class="section-label">
+                <span class="label-icon">🚫</span> Từ nhạy cảm (lọc khi tạo ảnh)
+              </label>
+            </div>
+            <div class="textarea-actions" style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-secondary btn-sm" id="btnEditSensitiveWords"
+                title="Chỉnh sửa danh sách từ nhạy cảm">
+                ✏️ Sửa
+              </button>
+            </div>
+          </div>
+
+          <div style="margin-top: 12px;">
+            <textarea id="sensitiveWordsInput" rows="18" readonly spellcheck="false"
+              placeholder="Mỗi từ/cụm từ nhạy cảm trên 1 dòng..."></textarea>
+          </div>
+          <p class="sensitive-words-hint">Mỗi từ/cụm từ trên 1 dòng. Từ nhạy cảm sẽ được phân tách ký tự bằng dấu chấm khi gửi prompt tạo ảnh cho Gem.</p>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Nút Refresh nổi cố định ở góc trái dưới -->
+  <button type="button" class="btn-floating-refresh" id="btnFloatingRefresh"
+    title="Làm mới & Xóa sạch toàn bộ thông tin bài báo">
+    <span class="floating-refresh-icon">🔄</span>
+    <span class="floating-refresh-text">Làm mới</span>
+  </button>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Dialog Thêm Page mới -->
+  <dialog class="modal" id="addPageModal">
+    <div class="modal-box">
+      <h3>➕ Thêm Fanpage Mới</h3>
+      <p class="modal-desc">Nhập tên Fanpage để thêm vào danh sách lựa chọn:</p>
+      <input type="text" id="newPageInput" placeholder="Ví dụ: Tiêu Điểm Online, Tin Nóng 24h..." />
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="btnCancelAddPage">Hủy</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmAddPage">Lưu Page</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Modal / Màn Hình Khóa Kích Hoạt Bản Quyền -->
+  <div class="modal-backdrop license-modal-backdrop" id="licenseModal" style="display: none;">
+    <div class="modal-dialog license-modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">🛡️ Kích Hoạt Bản Quyền FB Tool</h3>
+        <button type="button" class="btn-close-modal" id="btnCloseLicenseModal" style="display: none;">✕</button>
+      </div>
+      <form id="licenseActivationForm">
+        <div class="modal-body">
+          <div class="license-modal-desc">
+            Mỗi mã License Key chỉ được sử dụng trên <b>1 máy tính duy nhất</b>.
+          </div>
+
+          <!-- Thông tin mã máy nhận diện tự động -->
+          <div class="machine-id-card">
+            <div class="machine-id-label">🖥️ Mã Máy Tính Của Bạn:</div>
+            <div class="machine-id-value-wrap">
+              <span id="displayMachineId" class="machine-id-text">Đang nhận diện máy...</span>
+              <button type="button" class="btn-copy-machine-id" id="btnCopyMachineId"
+                title="Sao chép mã máy">📋</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 12px;">
+            <label for="inputLicenseKey"
+              style="font-size: 12px; font-weight: 600; color: #c9d1d9; display: block; margin-bottom: 6px;">
+              Mã License Key *
+            </label>
+            <input type="text" id="inputLicenseKey" class="form-control" placeholder="Ví dụ: FBPOSTER-XXXX-YYYY"
+              required autocomplete="off" spellcheck="false"
+              style="width: 100%; font-family: monospace; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; padding: 8px 10px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #58a6ff; box-sizing: border-box;" />
+          </div>
+
+          <div id="licenseAlertBox" class="license-alert-box" style="display: none;"></div>
+        </div>
+        <div class="modal-footer"
+          style="flex-direction: column; gap: 8px; border-top: 1px solid #30363d; padding: 12px 16px;">
+          <button type="submit" class="btn btn-primary" id="btnSubmitLicense"
+            style="width: 100%; padding: 10px; font-size: 13px; font-weight: 600;">
+            🚀 Kích Hoạt Ngay
+          </button>
+          <button type="button" class="btn btn-outline" id="btnLogoutLicense"
+            style="width: 100%; padding: 8px; font-size: 12px; color: #f85149; border-color: rgba(248, 81, 73, 0.4); display: none;"
+            title="Gỡ bỏ key khỏi tiện ích này">
+            🚪 Đăng Xuất Key
+          </button>
+          <div style="font-size: 11px; color: #8b949e; text-align: center; line-height: 1.4;">
+            Dùng chung mã Key với tool Auto Post. Liên hệ Admin nếu cần hỗ trợ.
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="parser.js"></script>
+  <script src="window.js"></script>
+</body>
+
+</html>
